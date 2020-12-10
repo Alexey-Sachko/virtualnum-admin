@@ -1,4 +1,5 @@
 import { ApolloProvider } from "@apollo/client";
+import { Grid } from "@material-ui/core";
 import React from "react";
 import { client } from "./client";
 
@@ -8,8 +9,14 @@ function App() {
   return (
     <ApolloProvider client={client}>
       <div className="App">
-        <header className="App-header">header</header>
-        <Services />
+        <Grid container>
+          <Grid item sm={3}>
+            left menu
+          </Grid>
+          <Grid item sm={9}>
+            <Services />
+          </Grid>
+        </Grid>
       </div>
     </ApolloProvider>
   );

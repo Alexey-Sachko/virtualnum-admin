@@ -473,6 +473,17 @@ export type ServicesQuery = (
   )> }
 );
 
+export type AllServicesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AllServicesQuery = (
+  { __typename?: 'Query' }
+  & { allServices: Array<(
+    { __typename?: 'ServiceDictionaryItemType' }
+    & Pick<ServiceDictionaryItemType, 'code' | 'name'>
+  )> }
+);
+
 
 export const ServicesDocument = gql`
     query Services($countryCode: String!) {
@@ -511,3 +522,36 @@ export function useServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<S
 export type ServicesQueryHookResult = ReturnType<typeof useServicesQuery>;
 export type ServicesLazyQueryHookResult = ReturnType<typeof useServicesLazyQuery>;
 export type ServicesQueryResult = Apollo.QueryResult<ServicesQuery, ServicesQueryVariables>;
+export const AllServicesDocument = gql`
+    query AllServices {
+  allServices {
+    code
+    name
+  }
+}
+    `;
+
+/**
+ * __useAllServicesQuery__
+ *
+ * To run a query within a React component, call `useAllServicesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllServicesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAllServicesQuery(baseOptions?: Apollo.QueryHookOptions<AllServicesQuery, AllServicesQueryVariables>) {
+        return Apollo.useQuery<AllServicesQuery, AllServicesQueryVariables>(AllServicesDocument, baseOptions);
+      }
+export function useAllServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllServicesQuery, AllServicesQueryVariables>) {
+          return Apollo.useLazyQuery<AllServicesQuery, AllServicesQueryVariables>(AllServicesDocument, baseOptions);
+        }
+export type AllServicesQueryHookResult = ReturnType<typeof useAllServicesQuery>;
+export type AllServicesLazyQueryHookResult = ReturnType<typeof useAllServicesLazyQuery>;
+export type AllServicesQueryResult = Apollo.QueryResult<AllServicesQuery, AllServicesQueryVariables>;
