@@ -22,10 +22,11 @@ export type Query = {
   users: Array<UserType>;
   allPermissions: Array<Permissions>;
   myCurrentActivations: Array<ActivationType>;
-  countriesFromApi: Array<CountryApiType>;
+  countries: Array<CountryType>;
   services: Array<ServiceType>;
   prices: Array<PriceType>;
   allServices: Array<ServiceDictionaryItemType>;
+  apiServices: Array<ServiceFromApi>;
   transactions: Array<TransactionGqlType>;
   freeCountries: Array<FreeCountryType>;
   freeNumbers: Array<FreeNumType>;
@@ -38,8 +39,18 @@ export type Query = {
 };
 
 
+export type QueryCountriesArgs = {
+  countriesQueryInput?: Maybe<CountriesQueryInput>;
+};
+
+
 export type QueryServicesArgs = {
   countryCode: Scalars['String'];
+};
+
+
+export type QueryApiServicesArgs = {
+  servicesApiQueryInput: ServicesApiQueryInput;
 };
 
 
@@ -104,6 +115,7 @@ export type ActivationType = {
   phoneNum: Scalars['String'];
   cost: Scalars['Float'];
   serviceCode: Scalars['String'];
+  countryCode: Scalars['String'];
   expiresAt: Scalars['DateTime'];
   sourceActivationId: Scalars['String'];
   activationCodes?: Maybe<Array<ActivationCodeType>>;
@@ -127,8 +139,12 @@ export type ActivationCodeType = {
   activationId: Scalars['Float'];
 };
 
-export type CountryApiType = {
-  __typename?: 'CountryApiType';
+export type CountriesQueryInput = {
+  notEmpty?: Maybe<Scalars['Boolean']>;
+};
+
+export type CountryType = {
+  __typename?: 'CountryType';
   code: Scalars['String'];
   name?: Maybe<Scalars['String']>;
 };
@@ -154,6 +170,23 @@ export type ServiceDictionaryItemType = {
   __typename?: 'ServiceDictionaryItemType';
   code: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type ServicesApiQueryInput = {
+  country: Scalars['String'];
+};
+
+export type ServiceFromApi = {
+  __typename?: 'ServiceFromApi';
+  code: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
+  prices: Array<PriceCountFromApi>;
+};
+
+export type PriceCountFromApi = {
+  __typename?: 'PriceCountFromApi';
+  price: Scalars['Float'];
+  count: Scalars['Float'];
 };
 
 export type TransactionGqlType = {
@@ -473,14 +506,33 @@ export type ServicesQuery = (
   )> }
 );
 
-export type AllServicesQueryVariables = Exact<{ [key: string]: never; }>;
+export type ApiServicesQueryVariables = Exact<{
+  servicesApiQueryInput: ServicesApiQueryInput;
+}>;
 
 
-export type AllServicesQuery = (
+export type ApiServicesQuery = (
   { __typename?: 'Query' }
-  & { allServices: Array<(
-    { __typename?: 'ServiceDictionaryItemType' }
-    & Pick<ServiceDictionaryItemType, 'code' | 'name'>
+  & { apiServices: Array<(
+    { __typename?: 'ServiceFromApi' }
+    & Pick<ServiceFromApi, 'code' | 'name'>
+    & { prices: Array<(
+      { __typename?: 'PriceCountFromApi' }
+      & Pick<PriceCountFromApi, 'price' | 'count'>
+    )> }
+  )> }
+);
+
+export type CountriesQueryVariables = Exact<{
+  countriesQueryInput?: Maybe<CountriesQueryInput>;
+}>;
+
+
+export type CountriesQuery = (
+  { __typename?: 'Query' }
+  & { countries: Array<(
+    { __typename?: 'CountryType' }
+    & Pick<CountryType, 'code' | 'name'>
   )> }
 );
 
@@ -522,9 +574,47 @@ export function useServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<S
 export type ServicesQueryHookResult = ReturnType<typeof useServicesQuery>;
 export type ServicesLazyQueryHookResult = ReturnType<typeof useServicesLazyQuery>;
 export type ServicesQueryResult = Apollo.QueryResult<ServicesQuery, ServicesQueryVariables>;
-export const AllServicesDocument = gql`
-    query AllServices {
-  allServices {
+export const ApiServicesDocument = gql`
+    query ApiServices($servicesApiQueryInput: ServicesApiQueryInput!) {
+  apiServices(servicesApiQueryInput: $servicesApiQueryInput) {
+    code
+    name
+    prices {
+      price
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useApiServicesQuery__
+ *
+ * To run a query within a React component, call `useApiServicesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useApiServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useApiServicesQuery({
+ *   variables: {
+ *      servicesApiQueryInput: // value for 'servicesApiQueryInput'
+ *   },
+ * });
+ */
+export function useApiServicesQuery(baseOptions: Apollo.QueryHookOptions<ApiServicesQuery, ApiServicesQueryVariables>) {
+        return Apollo.useQuery<ApiServicesQuery, ApiServicesQueryVariables>(ApiServicesDocument, baseOptions);
+      }
+export function useApiServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ApiServicesQuery, ApiServicesQueryVariables>) {
+          return Apollo.useLazyQuery<ApiServicesQuery, ApiServicesQueryVariables>(ApiServicesDocument, baseOptions);
+        }
+export type ApiServicesQueryHookResult = ReturnType<typeof useApiServicesQuery>;
+export type ApiServicesLazyQueryHookResult = ReturnType<typeof useApiServicesLazyQuery>;
+export type ApiServicesQueryResult = Apollo.QueryResult<ApiServicesQuery, ApiServicesQueryVariables>;
+export const CountriesDocument = gql`
+    query Countries($countriesQueryInput: CountriesQueryInput) {
+  countries(countriesQueryInput: $countriesQueryInput) {
     code
     name
   }
@@ -532,26 +622,27 @@ export const AllServicesDocument = gql`
     `;
 
 /**
- * __useAllServicesQuery__
+ * __useCountriesQuery__
  *
- * To run a query within a React component, call `useAllServicesQuery` and pass it any options that fit your needs.
- * When your component renders, `useAllServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useCountriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCountriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useAllServicesQuery({
+ * const { data, loading, error } = useCountriesQuery({
  *   variables: {
+ *      countriesQueryInput: // value for 'countriesQueryInput'
  *   },
  * });
  */
-export function useAllServicesQuery(baseOptions?: Apollo.QueryHookOptions<AllServicesQuery, AllServicesQueryVariables>) {
-        return Apollo.useQuery<AllServicesQuery, AllServicesQueryVariables>(AllServicesDocument, baseOptions);
+export function useCountriesQuery(baseOptions?: Apollo.QueryHookOptions<CountriesQuery, CountriesQueryVariables>) {
+        return Apollo.useQuery<CountriesQuery, CountriesQueryVariables>(CountriesDocument, baseOptions);
       }
-export function useAllServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllServicesQuery, AllServicesQueryVariables>) {
-          return Apollo.useLazyQuery<AllServicesQuery, AllServicesQueryVariables>(AllServicesDocument, baseOptions);
+export function useCountriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CountriesQuery, CountriesQueryVariables>) {
+          return Apollo.useLazyQuery<CountriesQuery, CountriesQueryVariables>(CountriesDocument, baseOptions);
         }
-export type AllServicesQueryHookResult = ReturnType<typeof useAllServicesQuery>;
-export type AllServicesLazyQueryHookResult = ReturnType<typeof useAllServicesLazyQuery>;
-export type AllServicesQueryResult = Apollo.QueryResult<AllServicesQuery, AllServicesQueryVariables>;
+export type CountriesQueryHookResult = ReturnType<typeof useCountriesQuery>;
+export type CountriesLazyQueryHookResult = ReturnType<typeof useCountriesLazyQuery>;
+export type CountriesQueryResult = Apollo.QueryResult<CountriesQuery, CountriesQueryVariables>;

@@ -9,11 +9,8 @@ function App() {
   return (
     <ApolloProvider client={client}>
       <div className="App">
-        <Grid container>
-          <Grid item sm={3}>
-            left menu
-          </Grid>
-          <Grid item sm={9}>
+        <Grid container justify="center">
+          <Grid item sm={8}>
             <Services />
           </Grid>
         </Grid>
