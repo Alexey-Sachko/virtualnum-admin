@@ -4,7 +4,7 @@ import {
   useServicesQuery,
   useApiServicesQuery,
   useCountriesQuery,
-} from "./generated/graphql";
+} from "../generated/graphql";
 import {
   Box,
   MenuItem,
@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
 } from "@material-ui/core";
+import Service from "./Service";
 
 export const SERVICES_QUERY = gql`
   query Services($countryCode: String!) {
@@ -54,7 +55,7 @@ const Services = () => {
   const [countryCode, setCountryCode] = React.useState("0");
 
   const { data: countriesData } = useCountriesQuery();
-  const { data } = useServicesQuery({ variables: { countryCode } });
+  const { data, refetch } = useServicesQuery({ variables: { countryCode } });
   const { data: apiServicesData } = useApiServicesQuery({
     variables: { servicesApiQueryInput: { country: countryCode } },
   });
@@ -81,30 +82,25 @@ const Services = () => {
           <TableCell>#</TableCell>
           <TableCell>name</TableCell>
           <TableCell>code</TableCell>
-          <TableCell>priceAmount</TableCell>
+          <TableCell width={"7%"}>priceAmount</TableCell>
           <TableCell>count</TableCell>
+          <TableCell>apiPrices</TableCell>
+          <TableCell>Actions</TableCell>
         </TableHead>
         <TableBody>
-          {apiServicesData?.apiServices.map(({ code, name }) => {
+          {apiServicesData?.apiServices.map((service) => {
             const addedService = data?.services.find(
-              (service) => service.code === code
+              (serv) => service.code === serv.code
             );
 
             return (
-              <TableRow
-                key={code}
-                style={{
-                  backgroundColor: addedService ? "#008e0094" : "#ff5100a6",
-                }}
-              >
-                <TableCell>
-                  <img src={`/icons/${code}.png`} width={30} height={30} />
-                </TableCell>
-                <TableCell>{name}</TableCell>
-                <TableCell>{code}</TableCell>
-                <TableCell>{addedService?.priceAmount}</TableCell>
-                <TableCell>{addedService?.count}</TableCell>
-              </TableRow>
+              <Service
+                addedService={addedService}
+                service={service}
+                key={service.code}
+                countryCode={countryCode}
+                refetchAdded={refetch}
+              />
             );
           })}
         </TableBody>

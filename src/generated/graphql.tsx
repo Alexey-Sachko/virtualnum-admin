@@ -493,6 +493,20 @@ export type MakePaymentResType = {
   url: Scalars['String'];
 };
 
+export type SaveServicesWithPricesMutationVariables = Exact<{
+  countryCode: Scalars['String'];
+  servicesWithPrices: Array<CreateServiceWithPricesDto>;
+}>;
+
+
+export type SaveServicesWithPricesMutation = (
+  { __typename?: 'Mutation' }
+  & { saveServicesWithPrices?: Maybe<Array<(
+    { __typename?: 'ErrorType' }
+    & Pick<ErrorType, 'path' | 'message'>
+  )>> }
+);
+
 export type ServicesQueryVariables = Exact<{
   countryCode: Scalars['String'];
 }>;
@@ -537,6 +551,43 @@ export type CountriesQuery = (
 );
 
 
+export const SaveServicesWithPricesDocument = gql`
+    mutation SaveServicesWithPrices($countryCode: String!, $servicesWithPrices: [CreateServiceWithPricesDto!]!) {
+  saveServicesWithPrices(
+    countryCode: $countryCode
+    servicesWithPrices: $servicesWithPrices
+  ) {
+    path
+    message
+  }
+}
+    `;
+export type SaveServicesWithPricesMutationFn = Apollo.MutationFunction<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
+
+/**
+ * __useSaveServicesWithPricesMutation__
+ *
+ * To run a mutation, you first call `useSaveServicesWithPricesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveServicesWithPricesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveServicesWithPricesMutation, { data, loading, error }] = useSaveServicesWithPricesMutation({
+ *   variables: {
+ *      countryCode: // value for 'countryCode'
+ *      servicesWithPrices: // value for 'servicesWithPrices'
+ *   },
+ * });
+ */
+export function useSaveServicesWithPricesMutation(baseOptions?: Apollo.MutationHookOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>) {
+        return Apollo.useMutation<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>(SaveServicesWithPricesDocument, baseOptions);
+      }
+export type SaveServicesWithPricesMutationHookResult = ReturnType<typeof useSaveServicesWithPricesMutation>;
+export type SaveServicesWithPricesMutationResult = Apollo.MutationResult<SaveServicesWithPricesMutation>;
+export type SaveServicesWithPricesMutationOptions = Apollo.BaseMutationOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
 export const ServicesDocument = gql`
     query Services($countryCode: String!) {
   services(countryCode: $countryCode) {
