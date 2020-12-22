@@ -20,6 +20,7 @@ export type Query = {
   me: MeResponse;
   roles: Array<RoleType>;
   users: Array<UserType>;
+  usersStat: UsersStat;
   allPermissions: Array<Permissions>;
   myCurrentActivations: Array<ActivationType>;
   countries: Array<CountryType>;
@@ -105,7 +106,14 @@ export type UserType = {
   __typename?: 'UserType';
   id: Scalars['String'];
   email?: Maybe<Scalars['String']>;
-  role: RoleType;
+  role?: Maybe<RoleType>;
+  balance: Scalars['Float'];
+};
+
+export type UsersStat = {
+  __typename?: 'UsersStat';
+  totalBalance: Scalars['Float'];
+  usersCount: Scalars['Float'];
 };
 
 export type ActivationType = {
@@ -259,12 +267,18 @@ export type OrderType = {
   amount: Scalars['Float'];
   status: OrderStatus;
   createdAt: Scalars['DateTime'];
+  formVariant: PaymentVariant;
 };
 
 export enum OrderStatus {
   WaitPay = 'WAIT_PAY',
   Error = 'ERROR',
   Paid = 'PAID'
+}
+
+export enum PaymentVariant {
+  Freekassa = 'FREEKASSA',
+  BankCard = 'BANK_CARD'
 }
 
 export type Mutation = {
@@ -292,6 +306,7 @@ export type Mutation = {
   updateArticle?: Maybe<Array<ErrorType>>;
   deleteArticle?: Maybe<ErrorType>;
   makePayment: MakePaymentResType;
+  forceConfirmOrder?: Maybe<ErrorType>;
 };
 
 
@@ -408,6 +423,12 @@ export type MutationMakePaymentArgs = {
   makePaymenInput: MakePaymentInput;
 };
 
+
+export type MutationForceConfirmOrderArgs = {
+  paymentId: Scalars['String'];
+  orderId: Scalars['Float'];
+};
+
 export type AuthCredentialsDto = {
   email: Scalars['String'];
   password: Scalars['String'];
@@ -485,27 +506,27 @@ export type UpdateArticleDto = {
 
 export type MakePaymentInput = {
   amount: Scalars['Float'];
+  variant: PaymentVariant;
 };
 
 export type MakePaymentResType = {
   __typename?: 'MakePaymentResType';
   orderId: Scalars['Float'];
-  url: Scalars['String'];
+  formUrl: Scalars['String'];
+  method: FormMethod;
+  fields: Array<PayFormField>;
 };
 
-export type SaveServicesWithPricesMutationVariables = Exact<{
-  countryCode: Scalars['String'];
-  servicesWithPrices: Array<CreateServiceWithPricesDto>;
-}>;
+export enum FormMethod {
+  Post = 'POST',
+  Get = 'GET'
+}
 
-
-export type SaveServicesWithPricesMutation = (
-  { __typename?: 'Mutation' }
-  & { saveServicesWithPrices?: Maybe<Array<(
-    { __typename?: 'ErrorType' }
-    & Pick<ErrorType, 'path' | 'message'>
-  )>> }
-);
+export type PayFormField = {
+  __typename?: 'PayFormField';
+  name: Scalars['String'];
+  value: Scalars['String'];
+};
 
 export type ServicesQueryVariables = Exact<{
   countryCode: Scalars['String'];
@@ -550,44 +571,36 @@ export type CountriesQuery = (
   )> }
 );
 
+export type SaveServicesWithPricesMutationVariables = Exact<{
+  countryCode: Scalars['String'];
+  servicesWithPrices: Array<CreateServiceWithPricesDto>;
+}>;
 
-export const SaveServicesWithPricesDocument = gql`
-    mutation SaveServicesWithPrices($countryCode: String!, $servicesWithPrices: [CreateServiceWithPricesDto!]!) {
-  saveServicesWithPrices(
-    countryCode: $countryCode
-    servicesWithPrices: $servicesWithPrices
-  ) {
-    path
-    message
-  }
-}
-    `;
-export type SaveServicesWithPricesMutationFn = Apollo.MutationFunction<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
 
-/**
- * __useSaveServicesWithPricesMutation__
- *
- * To run a mutation, you first call `useSaveServicesWithPricesMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSaveServicesWithPricesMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [saveServicesWithPricesMutation, { data, loading, error }] = useSaveServicesWithPricesMutation({
- *   variables: {
- *      countryCode: // value for 'countryCode'
- *      servicesWithPrices: // value for 'servicesWithPrices'
- *   },
- * });
- */
-export function useSaveServicesWithPricesMutation(baseOptions?: Apollo.MutationHookOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>) {
-        return Apollo.useMutation<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>(SaveServicesWithPricesDocument, baseOptions);
-      }
-export type SaveServicesWithPricesMutationHookResult = ReturnType<typeof useSaveServicesWithPricesMutation>;
-export type SaveServicesWithPricesMutationResult = Apollo.MutationResult<SaveServicesWithPricesMutation>;
-export type SaveServicesWithPricesMutationOptions = Apollo.BaseMutationOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
+export type SaveServicesWithPricesMutation = (
+  { __typename?: 'Mutation' }
+  & { saveServicesWithPrices?: Maybe<Array<(
+    { __typename?: 'ErrorType' }
+    & Pick<ErrorType, 'path' | 'message'>
+  )>> }
+);
+
+export type UsersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UsersQuery = (
+  { __typename?: 'Query' }
+  & { users: Array<(
+    { __typename?: 'UserType' }
+    & Pick<UserType, 'id' | 'email' | 'balance'>
+    & { role?: Maybe<(
+      { __typename?: 'RoleType' }
+      & Pick<RoleType, 'id' | 'name' | 'permissions'>
+    )> }
+  )> }
+);
+
+
 export const ServicesDocument = gql`
     query Services($countryCode: String!) {
   services(countryCode: $countryCode) {
@@ -697,3 +710,79 @@ export function useCountriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
 export type CountriesQueryHookResult = ReturnType<typeof useCountriesQuery>;
 export type CountriesLazyQueryHookResult = ReturnType<typeof useCountriesLazyQuery>;
 export type CountriesQueryResult = Apollo.QueryResult<CountriesQuery, CountriesQueryVariables>;
+export const SaveServicesWithPricesDocument = gql`
+    mutation SaveServicesWithPrices($countryCode: String!, $servicesWithPrices: [CreateServiceWithPricesDto!]!) {
+  saveServicesWithPrices(
+    countryCode: $countryCode
+    servicesWithPrices: $servicesWithPrices
+  ) {
+    path
+    message
+  }
+}
+    `;
+export type SaveServicesWithPricesMutationFn = Apollo.MutationFunction<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
+
+/**
+ * __useSaveServicesWithPricesMutation__
+ *
+ * To run a mutation, you first call `useSaveServicesWithPricesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveServicesWithPricesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveServicesWithPricesMutation, { data, loading, error }] = useSaveServicesWithPricesMutation({
+ *   variables: {
+ *      countryCode: // value for 'countryCode'
+ *      servicesWithPrices: // value for 'servicesWithPrices'
+ *   },
+ * });
+ */
+export function useSaveServicesWithPricesMutation(baseOptions?: Apollo.MutationHookOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>) {
+        return Apollo.useMutation<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>(SaveServicesWithPricesDocument, baseOptions);
+      }
+export type SaveServicesWithPricesMutationHookResult = ReturnType<typeof useSaveServicesWithPricesMutation>;
+export type SaveServicesWithPricesMutationResult = Apollo.MutationResult<SaveServicesWithPricesMutation>;
+export type SaveServicesWithPricesMutationOptions = Apollo.BaseMutationOptions<SaveServicesWithPricesMutation, SaveServicesWithPricesMutationVariables>;
+export const UsersDocument = gql`
+    query Users {
+  users {
+    id
+    email
+    balance
+    role {
+      id
+      name
+      permissions
+    }
+  }
+}
+    `;
+
+/**
+ * __useUsersQuery__
+ *
+ * To run a query within a React component, call `useUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUsersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useUsersQuery(baseOptions?: Apollo.QueryHookOptions<UsersQuery, UsersQueryVariables>) {
+        return Apollo.useQuery<UsersQuery, UsersQueryVariables>(UsersDocument, baseOptions);
+      }
+export function useUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UsersQuery, UsersQueryVariables>) {
+          return Apollo.useLazyQuery<UsersQuery, UsersQueryVariables>(UsersDocument, baseOptions);
+        }
+export type UsersQueryHookResult = ReturnType<typeof useUsersQuery>;
+export type UsersLazyQueryHookResult = ReturnType<typeof useUsersLazyQuery>;
+export type UsersQueryResult = Apollo.QueryResult<UsersQuery, UsersQueryVariables>;
