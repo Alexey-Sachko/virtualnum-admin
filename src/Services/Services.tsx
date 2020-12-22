@@ -51,6 +51,21 @@ export const COUNTRIES_QUERY = gql`
   }
 `;
 
+export const SAVE_SERVICES_QUERY = gql`
+  mutation SaveServicesWithPrices(
+    $countryCode: String!
+    $servicesWithPrices: [CreateServiceWithPricesDto!]!
+  ) {
+    saveServicesWithPrices(
+      countryCode: $countryCode
+      servicesWithPrices: $servicesWithPrices
+    ) {
+      path
+      message
+    }
+  }
+`;
+
 const Services = () => {
   const [countryCode, setCountryCode] = React.useState("0");
 
@@ -65,6 +80,21 @@ const Services = () => {
   ) => {
     setCountryCode(event.target.value as string);
   };
+
+  const services = React.useMemo(
+    () =>
+      apiServicesData?.apiServices.map((service) => {
+        const addedService = data?.services.find(
+          (serv) => service.code === serv.code
+        );
+
+        return {
+          apiService: service,
+          addedService,
+        };
+      }),
+    [apiServicesData?.apiServices, data?.services]
+  );
 
   return (
     <>
@@ -88,21 +118,15 @@ const Services = () => {
           <TableCell>Actions</TableCell>
         </TableHead>
         <TableBody>
-          {apiServicesData?.apiServices.map((service) => {
-            const addedService = data?.services.find(
-              (serv) => service.code === serv.code
-            );
-
-            return (
-              <Service
-                addedService={addedService}
-                service={service}
-                key={service.code}
-                countryCode={countryCode}
-                refetchAdded={refetch}
-              />
-            );
-          })}
+          {services?.map(({ addedService, apiService }) => (
+            <Service
+              addedService={addedService}
+              service={apiService}
+              key={apiService.code}
+              countryCode={countryCode}
+              refetchAdded={refetch}
+            />
+          ))}
         </TableBody>
       </Table>
     </>

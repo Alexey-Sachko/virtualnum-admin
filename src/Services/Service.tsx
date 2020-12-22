@@ -1,5 +1,10 @@
-import { gql } from "@apollo/client";
-import { IconButton, TableCell, TableRow, TextField } from "@material-ui/core";
+import {
+  IconButton,
+  makeStyles,
+  TableCell,
+  TableRow,
+  TextField,
+} from "@material-ui/core";
 import {
   Add as AddIcon,
   Cancel as CancelIcon,
@@ -13,21 +18,6 @@ import {
   useSaveServicesWithPricesMutation,
 } from "../generated/graphql";
 
-export const SAVE_SERVICES_QUERY = gql`
-  mutation SaveServicesWithPrices(
-    $countryCode: String!
-    $servicesWithPrices: [CreateServiceWithPricesDto!]!
-  ) {
-    saveServicesWithPrices(
-      countryCode: $countryCode
-      servicesWithPrices: $servicesWithPrices
-    ) {
-      path
-      message
-    }
-  }
-`;
-
 const Service = ({
   addedService,
   service,
@@ -39,6 +29,7 @@ const Service = ({
   countryCode: string;
   refetchAdded: () => void;
 }) => {
+  const classes = useStyles();
   const [saveServices, { loading }] = useSaveServicesWithPricesMutation();
 
   const [isEditing, setIsEditing] = React.useState(false);
@@ -82,12 +73,18 @@ const Service = ({
     }
   }, [addedService]);
 
+  const className = React.useMemo(() => {
+    if (!addedService) {
+      return classes.bgError;
+    } else if (addedService.count <= 0) {
+      return classes.bgWarn;
+    }
+
+    return classes.bgSuccess;
+  }, [addedService, classes.bgError, classes.bgSuccess, classes.bgWarn]);
+
   return (
-    <TableRow
-      style={{
-        backgroundColor: addedService ? "#008e0094" : "#ff5100a6",
-      }}
-    >
+    <TableRow className={className}>
       <TableCell>
         <img src={`/icons/${code}.png`} width={30} height={30} />
       </TableCell>
@@ -129,3 +126,15 @@ const Service = ({
 };
 
 export default Service;
+
+const useStyles = makeStyles((theme) => ({
+  bgError: {
+    backgroundColor: theme.palette.error.light,
+  },
+  bgSuccess: {
+    backgroundColor: theme.palette.success.light,
+  },
+  bgWarn: {
+    backgroundColor: theme.palette.warning.light,
+  },
+}));
