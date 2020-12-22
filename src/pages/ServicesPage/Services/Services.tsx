@@ -5,7 +5,7 @@ import {
   useApiServicesQuery,
   useCountriesQuery,
   useSaveServicesWithPricesMutation,
-} from "../generated/graphql";
+} from "../../../generated/graphql";
 import {
   Box,
   Button,

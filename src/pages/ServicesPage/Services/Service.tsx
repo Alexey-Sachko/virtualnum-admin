@@ -16,7 +16,7 @@ import {
   ApiServicesQuery,
   ServicesQuery,
   useSaveServicesWithPricesMutation,
-} from "../generated/graphql";
+} from "../../../generated/graphql";
 
 export type OnSaveParams = { code: string; price: number };
 
