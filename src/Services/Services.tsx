@@ -4,18 +4,20 @@ import {
   useServicesQuery,
   useApiServicesQuery,
   useCountriesQuery,
+  useSaveServicesWithPricesMutation,
 } from "../generated/graphql";
 import {
   Box,
+  Button,
+  Grid,
   MenuItem,
   Select,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableRow,
 } from "@material-ui/core";
-import Service from "./Service";
+import Service, { OnSaveParams } from "./Service";
 
 export const SERVICES_QUERY = gql`
   query Services($countryCode: String!) {
@@ -66,6 +68,10 @@ export const SAVE_SERVICES_QUERY = gql`
   }
 `;
 
+const topCodes = ["vk", "ym", "ma", "dt"];
+
+const PROFIT_FACTOR = 1.1;
+
 const Services = () => {
   const [countryCode, setCountryCode] = React.useState("0");
 
@@ -74,6 +80,20 @@ const Services = () => {
   const { data: apiServicesData } = useApiServicesQuery({
     variables: { servicesApiQueryInput: { country: countryCode } },
   });
+  const [saveServices, { loading }] = useSaveServicesWithPricesMutation();
+
+  const mutableServices = [...(apiServicesData?.apiServices || [])];
+
+  const apiServices = mutableServices.sort((a, b) => {
+    const indexA = topCodes.indexOf(a.code);
+    const indexB = topCodes.indexOf(b.code);
+
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+
+    return indexB - indexA;
+  });
 
   const handleCountryChange = (
     event: React.ChangeEvent<{ value: unknown }>
@@ -81,9 +101,29 @@ const Services = () => {
     setCountryCode(event.target.value as string);
   };
 
+  const saveServicesCb = React.useCallback(
+    async (items: { code: string; price: number }[]) => {
+      const res = await saveServices({
+        variables: {
+          countryCode,
+          servicesWithPrices: items.map(({ price, code }) => ({ price, code })),
+        },
+      });
+      refetch();
+    },
+    [countryCode, refetch, saveServices]
+  );
+
+  const onSaveService = React.useCallback(
+    (service: OnSaveParams) => {
+      return saveServicesCb([service]);
+    },
+    [saveServicesCb]
+  );
+
   const services = React.useMemo(
     () =>
-      apiServicesData?.apiServices.map((service) => {
+      apiServices?.map((service) => {
         const addedService = data?.services.find(
           (serv) => service.code === serv.code
         );
@@ -93,19 +133,66 @@ const Services = () => {
           addedService,
         };
       }),
-    [apiServicesData?.apiServices, data?.services]
+    [apiServices, data?.services]
   );
+
+  const onCreateAll = () => {
+    const servicesToSave = services
+      ?.filter(({ addedService }) => !addedService)
+      .map(({ apiService: { code, prices } }) => ({
+        code,
+        price: prices[prices.length - 1].price,
+      }));
+
+    if (servicesToSave && servicesToSave.length) {
+      saveServicesCb(servicesToSave);
+    }
+  };
+
+  const onPriceUp = () => {
+    const servicesToSave = services
+      ?.filter(({ addedService }) => addedService && addedService.count <= 0)
+      .map(({ apiService: { code, prices } }) => ({
+        code,
+        price: Math.round(prices[prices.length - 1].price * PROFIT_FACTOR) + 1,
+      }));
+
+    console.log(
+      servicesToSave,
+      services?.filter(
+        ({ addedService }) => addedService && addedService.count <= 0
+      )
+    );
+
+    if (servicesToSave && servicesToSave.length) {
+      saveServicesCb(servicesToSave);
+    }
+  };
 
   return (
     <>
       <Box py={3}>
-        <Select value={countryCode} onChange={handleCountryChange}>
-          {countriesData?.countries.map(({ code, name }) => (
-            <MenuItem value={code} key={code}>
-              {name} ({code})
-            </MenuItem>
-          ))}
-        </Select>
+        <Grid container spacing={5}>
+          <Grid item>
+            <Select value={countryCode} onChange={handleCountryChange}>
+              {countriesData?.countries.map(({ code, name }) => (
+                <MenuItem value={code} key={code}>
+                  {name} ({code})
+                </MenuItem>
+              ))}
+            </Select>
+          </Grid>
+          <Grid item>
+            <Button color="secondary" variant="outlined" onClick={onCreateAll}>
+              Create All
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button color="primary" variant="outlined" onClick={onPriceUp}>
+              Up price
+            </Button>
+          </Grid>
+        </Grid>
       </Box>
       <Table size="small">
         <TableHead>
@@ -124,7 +211,7 @@ const Services = () => {
               service={apiService}
               key={apiService.code}
               countryCode={countryCode}
-              refetchAdded={refetch}
+              onSave={onSaveService}
             />
           ))}
         </TableBody>

@@ -18,16 +18,18 @@ import {
   useSaveServicesWithPricesMutation,
 } from "../generated/graphql";
 
+export type OnSaveParams = { code: string; price: number };
+
 const Service = ({
   addedService,
   service,
   countryCode,
-  refetchAdded,
+  onSave,
 }: {
   service: ApiServicesQuery["apiServices"][number];
   addedService: ServicesQuery["services"][number] | undefined;
   countryCode: string;
-  refetchAdded: () => void;
+  onSave: (props: OnSaveParams) => void | Promise<void>;
 }) => {
   const classes = useStyles();
   const [saveServices, { loading }] = useSaveServicesWithPricesMutation();
@@ -51,13 +53,7 @@ const Service = ({
   };
 
   const handleDoneEdit = async () => {
-    const res = await saveServices({
-      variables: {
-        countryCode,
-        servicesWithPrices: [{ code: service.code, price: priceAmount }],
-      },
-    });
-    refetchAdded();
+    await onSave({ code: service.code, price: priceAmount });
     setIsEditing(false);
   };
 
@@ -99,7 +95,7 @@ const Service = ({
       </TableCell>
       <TableCell>{addedService?.count}</TableCell>
       <TableCell>
-        {minPrice.price}—{maxPrice.price}
+        {minPrice.price}—{maxPrice.price} ({maxPrice.count})
       </TableCell>
       <TableCell>
         {isEditing ? (
