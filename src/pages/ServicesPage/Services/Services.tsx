@@ -68,7 +68,7 @@ export const SAVE_SERVICES_QUERY = gql`
   }
 `;
 
-const topCodes = ["vk", "ym", "ma", "dt"];
+const topCodes = ["vk", "ym", "ma", "dt", "ok"];
 
 const PROFIT_FACTOR = 1.1;
 
@@ -76,10 +76,15 @@ const Services = () => {
   const [countryCode, setCountryCode] = React.useState("0");
 
   const { data: countriesData } = useCountriesQuery();
-  const { data, refetch } = useServicesQuery({ variables: { countryCode } });
+  const { data, refetch } = useServicesQuery({
+    variables: { countryCode },
+    fetchPolicy: "cache-and-network",
+  });
   const { data: apiServicesData } = useApiServicesQuery({
     variables: { servicesApiQueryInput: { country: countryCode } },
+    fetchPolicy: "cache-and-network",
   });
+
   const [saveServices, { loading }] = useSaveServicesWithPricesMutation();
 
   const mutableServices = [...(apiServicesData?.apiServices || [])];
