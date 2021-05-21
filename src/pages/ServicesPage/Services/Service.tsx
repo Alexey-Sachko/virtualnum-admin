@@ -40,6 +40,8 @@ const Service = ({
   const { code, name, prices } = service;
   const minPrice = prices[0];
   const maxPrice = prices[prices.length - 1];
+  const margin = priceAmount - minPrice.price;
+  const marginPercents = (margin / priceAmount) * 100;
 
   const handleClickEdit = () => {
     setIsEditing(true);
@@ -97,6 +99,7 @@ const Service = ({
       <TableCell>
         {minPrice.price}—{maxPrice.price} ({maxPrice.count})
       </TableCell>
+      <TableCell>{addedService ? marginPercents.toFixed(1) : 0}</TableCell>
       <TableCell>
         {isEditing ? (
           <>

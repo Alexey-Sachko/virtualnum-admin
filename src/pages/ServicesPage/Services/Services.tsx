@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { gql } from "@apollo/client/core";
 import {
-  useServicesQuery,
-  useApiServicesQuery,
   useCountriesQuery,
   useSaveServicesWithPricesMutation,
+  useServicesLazyQuery,
+  useApiServicesLazyQuery,
 } from "../../../generated/graphql";
 import {
   Box,
@@ -75,15 +75,14 @@ const PROFIT_FACTOR = 1.1;
 const Services = () => {
   const [countryCode, setCountryCode] = React.useState("0");
 
-  const { data: countriesData } = useCountriesQuery();
-  const { data, refetch } = useServicesQuery({
-    variables: { countryCode },
-    fetchPolicy: "cache-and-network",
+  const { data: countriesData } = useCountriesQuery({
+    fetchPolicy: "network-only",
   });
-  const { data: apiServicesData } = useApiServicesQuery({
-    variables: { servicesApiQueryInput: { country: countryCode } },
-    fetchPolicy: "cache-and-network",
+  const [fetchServices, { data, refetch }] = useServicesLazyQuery({
+    fetchPolicy: "network-only",
   });
+  const [fetchApiServices, { data: apiServicesData }] =
+    useApiServicesLazyQuery();
 
   const [saveServices, { loading }] = useSaveServicesWithPricesMutation();
 
@@ -106,6 +105,15 @@ const Services = () => {
     setCountryCode(event.target.value as string);
   };
 
+  useEffect(() => {
+    fetchServices({
+      variables: { countryCode },
+    });
+    fetchApiServices({
+      variables: { servicesApiQueryInput: { country: countryCode } },
+    });
+  }, [countryCode, fetchApiServices, fetchServices]);
+
   const saveServicesCb = React.useCallback(
     async (items: { code: string; price: number }[]) => {
       const res = await saveServices({
@@ -114,7 +122,7 @@ const Services = () => {
           servicesWithPrices: items.map(({ price, code }) => ({ price, code })),
         },
       });
-      refetch();
+      refetch?.();
     },
     [countryCode, refetch, saveServices]
   );
@@ -159,7 +167,7 @@ const Services = () => {
       ?.filter(({ addedService }) => addedService && addedService.count <= 0)
       .map(({ apiService: { code, prices } }) => ({
         code,
-        price: Math.round(prices[prices.length - 1].price * PROFIT_FACTOR) + 1,
+        price: Math.round(prices[prices.length - 1].price * PROFIT_FACTOR) + 2,
       }));
 
     console.log(
@@ -173,6 +181,8 @@ const Services = () => {
       saveServicesCb(servicesToSave);
     }
   };
+
+  console.log(countryCode);
 
   return (
     <>
@@ -207,6 +217,7 @@ const Services = () => {
           <TableCell width={"7%"}>priceAmount</TableCell>
           <TableCell>count</TableCell>
           <TableCell>apiPrices</TableCell>
+          <TableCell>profit(%)</TableCell>
           <TableCell>Actions</TableCell>
         </TableHead>
         <TableBody>
